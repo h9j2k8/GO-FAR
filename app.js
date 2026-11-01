@@ -484,15 +484,33 @@
   const uid = () => Math.random().toString(36).slice(2, 9);
 
   function home() {
-    const cases = S.log.length, cgs = cgStats(), goals = cgs.t, gdone = cgs.d;
-    view.innerHTML = `<section class="landing"><div class="frame">
-      <h1>LET'S GO-FAR<br><span>GLOBAL OCULOPLASTIC – FELLOWSHIP AND RESEARCH</span></h1>
-      <div class="tiles">
-        <a class="tile t-year" href="#/year"><b>Fellowship at a Glance</b><small>${yearSummary()}</small></a>
-        <div class="tile t-board"><a class="tt" href="#/board"><b>Task Board</b></a><ul><li><a href="#/log">surgical log <em>${cases} cases</em></a></li><li><a href="#/clinical">clinical goals <em>${gdone}/${goals}</em></a></li><li><a href="#/surgical">surgical goals <em>${sgStats().d}/${sgStats().t}</em></a></li><li><a href="#/didactic">didactic and scholarly activity <em>${dgStats().d}/${dgStats().t}</em></a></li></ul></div>
-        <a class="tile t-res" href="#/library"><b>Resources</b><small>${LIBRARY.length} references, societies and guidelines</small></a>
-        <a class="tile t-learn" href="#/courses"><b>Interactive Learning Modules</b><small>${overall()}% complete · ${COURSES.length} courses</small></a>
-      </div></div></section>`;
+    const cases = S.log.length, cg = cgStats(), sg = sgStats(), dg = dgStats(), nu = nextUp(), pct = overall();
+    const hr = new Date().getHours(), hi = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
+    const nm = S.name ? ', ' + esc(S.name) : '';
+    const goalsDone = cg.d + sg.d + dg.d, goalsAll = cg.t + sg.t + dg.t;
+    view.innerHTML = `<section class="home">
+      <div class="h-hero">
+        <div class="h-copy"><span class="h-eyebrow">Global Oculoplastics · Fellowship &amp; Research</span>
+          <h1>${hi}${nm}.<br>Let's GO-FAR today.</h1>
+          <p>${nu ? 'Short, interactive lessons you can finish between cases. Pick up right where you left off.' : 'You have completed every module. Excellent work.'}</p>
+          <div class="h-cta">${nu ? `<a class="btn gold" href="#/learn/${nu.c.id}/${nu.m.id}/${nu.i}">Continue learning →</a><span class="h-next">${esc(nu.m.title)}</span>` : '<a class="btn gold" href="#/courses">Review modules</a>'}</div></div>
+        <div class="h-ring" role="img" aria-label="${pct}% of learning modules complete"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" class="rt"/><circle cx="60" cy="60" r="52" class="rf" style="stroke-dasharray:${(326.7 * pct / 100).toFixed(1)} 326.7"/></svg><div><b>${pct}%</b><span>complete</span></div></div>
+      </div>
+      <div class="h-stats">
+        <div><b>${cases}</b><span>cases logged</span></div>
+        <div><b>${goalsDone}<small>/${goalsAll}</small></b><span>goals met</span></div>
+        <div><b>${streak()}</b><span>day streak</span></div>
+        <div><b>${COURSES.length}</b><span>courses</span></div>
+      </div>
+      <h2 class="h-h2">Where to next?</h2>
+      <div class="h-grid">
+        <a class="h-card c-learn" href="#/courses"><span class="ic">📚</span><b>Learning modules</b><small>${COURSES.length} courses · ${pct}% complete</small><i class="go">Open →</i></a>
+        <a class="h-card c-board" href="#/board"><span class="ic">✅</span><b>Task board</b><small>${cases} cases · ${cg.d}/${cg.t} clinical · ${sg.d}/${sg.t} surgical · ${dg.d}/${dg.t} scholarly</small><i class="go">Open →</i></a>
+        <a class="h-card c-year" href="#/year"><span class="ic">🗓</span><b>Fellowship at a glance</b><small>${yearSummary()}</small><i class="go">Open →</i></a>
+        <a class="h-card c-res" href="#/library"><span class="ic">🔖</span><b>Resources</b><small>${LIBRARY.length} references, societies and guidelines</small><i class="go">Open →</i></a>
+        <a class="h-card c-prac" href="#/practice"><span class="ic">🧠</span><b>Question bank</b><small>Practise and test yourself</small><i class="go">Open →</i></a>
+        <a class="h-card c-tools" href="#/tools"><span class="ic">🧮</span><b>Clinical tools</b><small>Quick calculators and references</small><i class="go">Open →</i></a>
+      </div></section>`;
   }
   function yearSummary() {
     if (!S.start) return 'Programme schedule · set your start month';
