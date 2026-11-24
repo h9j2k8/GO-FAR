@@ -306,10 +306,7 @@ window.YEAR6 = [
    lvl: M = must have/required, S = should have, A = additional training, E = expected competency (no letter in source). */
 window.CGOALS = [
   { title: 'Training targets', note: 'Per year of fellowship', items: [
-    { id: 'n-enc', lvl: 'M', t: 'Patient encounters', d: 'Personally evaluate and plan treatment for patient encounters with oculoplastic problems', n: 1200, unit: 'patient encounters / year' },
-    { id: 'n-lect', lvl: 'M', t: 'Lecture / discussion hours', d: 'Lecture / discussion hours', n: 100, unit: 'hours' },
-    { id: 'research', lvl: 'M', t: 'Complete a research project', d: 'Plan and execute at least one research project' },
-    { id: 'prepost', lvl: 'M', t: 'Manage cases before and after surgery', d: 'Participate actively in pre- and postoperative management of cases in which you are on the surgical team' } ] },
+    { id: 'n-enc', lvl: 'M', t: 'Patient encounters', d: 'Personally evaluate and plan treatment for patient encounters with oculoplastic problems', n: 1200, unit: 'patient encounters / year' } ] },
   { title: 'Examination skills', items: [
     { id: 'ex-lid', lvl: 'M', t: 'Eyelid position exam', d: 'Examine upper and lower eyelid position: dermatochalasis, retraction, entropion, ectropion, ptosis and eyelid tumours' },
     { id: 'ex-lac', lvl: 'M', t: 'Lacrimal and nasal exam (speculum, endoscope)', d: 'Examine the lacrimal system, including nasal examination with speculum and endoscope' },
@@ -338,6 +335,8 @@ window.CGOALS = [
 /* Didactic and scholarly activity goals (own page on the task board). Adapted from the ICO curriculum, as above. */
 window.DGOALS = [
   { title: 'Didactic and scholarly activity', items: [
+    { id: 'n-lect', lvl: 'M', t: 'Lecture / discussion hours', d: 'Lecture / discussion hours', n: 100, unit: 'hours' },
+    { id: 'research', lvl: 'M', t: 'Complete a research project', d: 'Plan and execute at least one research project' },
     { id: 'd-conf', lvl: 'M', t: 'Attend conferences, lectures and journal clubs', d: 'Participate in clinical conferences, didactic lectures and journal clubs, including case presentations' },
     { id: 'd-mm', lvl: 'S', t: 'Join M&M, pathology and radiology sessions', d: 'Contribute to morbidity and mortality sessions and to pathology and radiology sessions, as both leader/teacher and learner' },
     { id: 'd-doc', lvl: 'S', t: 'Document your participation', d: 'Document your participation (name of presentation, type, meeting, date, location)' },

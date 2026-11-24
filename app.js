@@ -18,7 +18,8 @@
     S.v2 = 1; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
   }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
-  const today = () => new Date().toISOString().slice(0, 10);
+  const ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const today = () => ymd(new Date());
   if (!S.days.includes(today())) { S.days.push(today()); save(); }
 
   const sk = (c, m, i) => `${c}/${m}/${i}`;
@@ -28,7 +29,7 @@
   const allModules = () => COURSES.flatMap(c => c.modules.map(m => ({ c, m })));
   const overall = () => { let d = 0, n = 0; COURSES.forEach(c => { const p = courseProgress(c); d += p.d; n += p.n; }); return n ? Math.round(100 * d / n) : 0; };
   const quizAvg = () => { const v = Object.values(S.scores); if (!v.length) return null; return Math.round(100 * v.reduce((a, s) => a + s.score / s.total, 0) / v.length); };
-  const streak = () => { let n = 0; const d = new Date(); while (S.days.includes(d.toISOString().slice(0, 10))) { n++; d.setDate(d.getDate() - 1); } return n; };
+  const streak = () => { let n = 0; const d = new Date(); while (S.days.includes(ymd(d))) { n++; d.setDate(d.getDate() - 1); } return n; };
   const nextUp = () => {
     if (S.last) { const c = course(S.last.c), m = c && c.modules.find(x => x.id === S.last.m); if (m && !modProgress(c, m).done) return { c, m, i: S.last.i }; }
     const f = allModules().find(({ c, m }) => !modProgress(c, m).done);
@@ -48,10 +49,10 @@
   $('#themeBtn').onclick = () => { S.theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; save(); applyTheme(); };
   $('#menuBtn').onclick = () => $('#rail').classList.toggle('open');
 
-  const NAV = [['#/', '🏠', 'Home'], ['#/year', '🗓', 'Fellowship at a glance'], ['#/board', '✅', 'Task board'], ['#/library', '🔖', 'Resources'], ['#/courses', '📚', 'Learning modules'], ['#/exam', '📝', 'Qualifying exam'], ['#/practice', '🧠', 'Question bank'], ['#/tools', '🧮', 'Clinical tools'], ['#/dashboard', '📊', 'My learning dashboard'], ['#/progress', '📈', 'My progress']];
+  const NAV = [['#/', '🏠', 'Home'], ['#/year', '🗓', 'Fellowship at a glance'], ['#/board', '✅', 'Task board'], ['#/library', '🔖', 'Resources'], ['#/courses', '📚', 'Learning modules'], ['#/exam', '📝', 'Knowledge Checkpoint'], ['#/practice', '🧠', 'Question bank'], ['#/tools', '🧮', 'Clinical tools'], ['#/dashboard', '📊', 'My learning dashboard'], ['#/progress', '📈', 'My progress']];
   function renderShell(path) {
     $('#nav').innerHTML = NAV.map(([h, ic, l]) => `<a href="${h}" class="${(h === '#/' ? path === '/' : path.startsWith(h.slice(1))) || (h === '#/courses' && /^\/(course|learn)/.test(path)) || (h === '#/board' && /^\/(log|clinical|surgical|didactic)/.test(path)) ? 'on' : ''}"><span class="ic">${ic}</span>${l}</a>`).join('');
-    const nm = S.name || 'Fellow';
+    const nm = S.name || 'Joon';
     $('#userBtn').innerHTML = `<span class="avatar">${esc(nm[0].toUpperCase())}</span><span>${esc(nm)}</span>`;
     $('#rail').classList.remove('open');
   }
@@ -131,7 +132,6 @@
     const LVEX = ['What is the most common cause of acquired ptosis in older adults?', 'Which operation for MRD1 1 mm, levator function 12 mm and a high lid crease?', 'Which adverse effects to monitor with teprotumumab, or the order of rehabilitative surgery in thyroid eye disease?'];
     view.innerHTML = `<h1>Learning modules</h1>
       <div class="card" style="padding:0;overflow-x:auto"><table class="tbl lvtbl" style="margin:0"><thead><tr><th>Level</th><th>What it means</th><th>Example question</th><th>Modules</th></tr></thead><tbody>${LVN.map((n, i) => `<tr class="${S.level === i ? 'me' : ''}"><td><b class="lv${i}">${n}</b>${S.level === i ? ' <span class="lvb rec">You</span>' : ''}</td><td>${LVD[i]}</td><td>${LVEX[i]}</td><td>${COURSES.flatMap(c => c.modules.filter(m => LVX[m.level] === i).map(m => `<a href="#/learn/${c.id}/${m.id}/0">${esc(m.title)}</a>`)).join(', ')}</td></tr>`).join('')}</tbody></table></div>
-      <div class="card examban"><div><h3 style="margin:0">📝 Qualifying exam</h3><p style="margin:4px 0 0" class="sample">${S.exam ? `Your level: <b>${LVN[S.level]}</b>. Retake any time.` : 'Find your starting level. 15 adaptive questions, about 15 minutes.'}</p></div><span><a class="btn" href="#/exam">${S.exam ? 'View results' : 'Take the exam'}</a> <a class="btn alt" href="#/practice">Question bank</a></span></div>
       <div class="grid g3" style="margin-top:14px">${COURSES.map(courseCard).join('')}</div>`;
   }
 
@@ -484,29 +484,27 @@
   const uid = () => Math.random().toString(36).slice(2, 9);
 
   function home() {
-    const cases = S.log.length, cg = cgStats(), sg = sgStats(), dg = dgStats(), nu = nextUp(), pct = overall();
+    const cases = S.log.length, cg = cgStats(), sg = sgStats(), dg = dgStats(), nu = nextUp(), pct = overall(), stk = streak();
     const hr = new Date().getHours(), hi = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
-    const nm = S.name ? ', ' + esc(S.name) : '';
-    const goalsDone = cg.d + sg.d + dg.d, goalsAll = cg.t + sg.t + dg.t;
+    const nm = ', ' + esc(S.name || 'Joon');
+    const ringHtml = `<div class="h-ring" role="img" aria-label="${pct}% of learning modules complete"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" class="rt"/><circle cx="60" cy="60" r="52" class="rf" style="stroke-dasharray:${(326.7 * pct / 100).toFixed(1)} 326.7"/></svg><div><b>${pct}%</b><span>complete</span></div></div>`;
     view.innerHTML = `<section class="home">
       <div class="h-hero">
-        <div class="h-copy"><span class="h-eyebrow">Global Oculoplastics · Fellowship &amp; Research</span>
-          <h1>${hi}${nm}.<br>Let's GO-FAR today.</h1>
+        <div class="h-copy"><div class="h-top"><span class="h-eyebrow">Global Oculoplastics · Fellowship &amp; Research</span><div class="h-streak" title="Consecutive days you have opened the portal" role="img" aria-label="${stk} day streak"><span class="fl">🔥</span><b>${stk}</b><small>day streak</small></div></div>
+          <div class="h-head"><h1>${hi}${nm}.<br>Let's GO-FAR today!</h1></div>
           <p>${nu ? 'Short, interactive lessons you can finish between cases. Pick up right where you left off.' : 'You have completed every module. Excellent work.'}</p>
-          <div class="h-cta">${nu ? `<a class="btn gold" href="#/learn/${nu.c.id}/${nu.m.id}/${nu.i}">Continue learning →</a><span class="h-next">${esc(nu.m.title)}</span>` : '<a class="btn gold" href="#/courses">Review modules</a>'}</div></div>
-        <div class="h-ring" role="img" aria-label="${pct}% of learning modules complete"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" class="rt"/><circle cx="60" cy="60" r="52" class="rf" style="stroke-dasharray:${(326.7 * pct / 100).toFixed(1)} 326.7"/></svg><div><b>${pct}%</b><span>complete</span></div></div>
-      </div>
-      <div class="h-stats">
-        <div><b>${cases}</b><span>cases logged</span></div>
-        <div><b>${goalsDone}<small>/${goalsAll}</small></b><span>goals met</span></div>
-        <div><b>${streak()}</b><span>day streak</span></div>
-        <div><b>${COURSES.length}</b><span>courses</span></div>
+          <div class="h-cta">${nu ? `<a class="btn gold" href="#/learn/${nu.c.id}/${nu.m.id}/${nu.i}">Continue learning →</a><span class="h-next">${esc(nu.m.title)}</span>${ringHtml}` : '<a class="btn gold" href="#/courses">Review modules</a>' + ringHtml}</div></div>
+        
+        <div class="h-boxes"><a class="h-glance" href="#/year"><span class="ic">🗓</span><b>Fellowship at a Glance</b><small>${yearSummary()}</small><i>Open schedule →</i></a><div class="h-glance h-board"><a class="hb-title" href="#/board"><span class="ic">✅</span><b>Task Board</b></a>
+          <ul><li><a href="#/log"><span>📓 Surgical log</span><em>${cases} case${cases === 1 ? '' : 's'}</em></a></li>
+          <li><a href="#/clinical"><span>🩺 Clinical goals</span><em>${cg.d}/${cg.t}</em></a></li>
+          <li><a href="#/surgical"><span>🎯 Surgical goals</span><em>${sg.d}/${sg.t}</em></a></li>
+          <li><a href="#/didactic"><span>🎓 Didactic &amp; scholarly</span><em>${dg.d}/${dg.t}</em></a></li></ul></div></div>
       </div>
       <h2 class="h-h2">Where to next?</h2>
       <div class="h-grid">
+        <a class="h-card c-exam" href="#/exam"><span class="ic">📝</span><b>Knowledge Checkpoint</b><small>Find your starting point and see where to focus</small><i class="go">Open →</i></a>
         <a class="h-card c-learn" href="#/courses"><span class="ic">📚</span><b>Learning modules</b><small>${COURSES.length} courses · ${pct}% complete</small><i class="go">Open →</i></a>
-        <a class="h-card c-board" href="#/board"><span class="ic">✅</span><b>Task board</b><small>${cases} cases · ${cg.d}/${cg.t} clinical · ${sg.d}/${sg.t} surgical · ${dg.d}/${dg.t} scholarly</small><i class="go">Open →</i></a>
-        <a class="h-card c-year" href="#/year"><span class="ic">🗓</span><b>Fellowship at a glance</b><small>${yearSummary()}</small><i class="go">Open →</i></a>
         <a class="h-card c-res" href="#/library"><span class="ic">🔖</span><b>Resources</b><small>${LIBRARY.length} references, societies and guidelines</small><i class="go">Open →</i></a>
         <a class="h-card c-prac" href="#/practice"><span class="ic">🧠</span><b>Question bank</b><small>Practise and test yourself</small><i class="go">Open →</i></a>
         <a class="h-card c-tools" href="#/tools"><span class="ic">🧮</span><b>Clinical tools</b><small>Quick calculators and references</small><i class="go">Open →</i></a>
@@ -686,13 +684,13 @@
   function examPage() {
     if (run) {
       const q = run.cur, n = run.log.length;
-      view.innerHTML = `<div class="crumbs"><a href="#/exam" id="quit">Quit exam</a></div><div class="card stage"><div class="kicker">Qualifying exam · Question ${n + 1} of ${EXAM_N}</div>${bar(Math.round(100 * n / EXAM_N))}<h2 style="margin-top:18px">${esc(q.q)}</h2><div id="eo">${run.order.map((oi, k) => `<button type="button" class="case-opt" data-o="${oi}">${String.fromCharCode(65 + k)}. ${esc(q.o[oi])}</button>`).join('')}</div><p class="sample">Answers and explanations are shown at the end. You cannot go back.</p></div>`;
+      view.innerHTML = `<div class="crumbs"><a href="#/exam" id="quit">Quit exam</a></div><div class="card stage"><div class="kicker">Knowledge Checkpoint · Question ${n + 1} of ${EXAM_N}</div>${bar(Math.round(100 * n / EXAM_N))}<h2 style="margin-top:18px">${esc(q.q)}</h2><div id="eo">${run.order.map((oi, k) => `<button type="button" class="case-opt" data-o="${oi}">${String.fromCharCode(65 + k)}. ${esc(q.o[oi])}</button>`).join('')}</div><p class="sample">Answers and explanations are shown at the end. You cannot go back.</p></div>`;
       $('#quit', view).onclick = e => { e.preventDefault(); if (confirm('Quit the exam? Your answers will be lost.')) { run = null; examPage(); } };
       $$('#eo button', view).forEach(b => b.onclick = () => { const oi = +b.dataset.o; run.log.push({ q, target: run.target, pick: q.o[oi], ok: oi === q.a }); run.target = Math.max(0, Math.min(2, run.target + (oi === q.a ? 1 : -1))); if (run.log.length >= EXAM_N) { finishExam(); examPage(); } else { nextQ(); examPage(); scrollTo(0, 0); } });
       return;
     }
     if (!S.exam) {
-      view.innerHTML = `<h1>Qualifying exam</h1><div class="card stage"><p>This exam estimates your starting knowledge level in oculoplastic surgery so the portal can recommend where to begin.</p>
+      view.innerHTML = `<h1>Knowledge Checkpoint</h1><div class="card stage"><p>This exam estimates your starting knowledge level in oculoplastic surgery so the portal can recommend where to begin. Come back and repeat the checkpoint any time to track your progression.</p>
         <ul><li><b>${EXAM_N} questions</b>, about 15 minutes, across anatomy, ptosis, eyelid malposition, aesthetics, orbit, lacrimal and oncology.</li><li><b>Adaptive:</b> questions get harder when you answer correctly and easier when you do not.</li><li><b>Three levels:</b> Foundation, Core and Advanced.</li><li>No grade is recorded against you. You can retake it at any time.</li></ul>
         <p class="sample">Draft questions awaiting faculty review.</p><button class="btn" id="go" type="button">Start the exam</button></div>`;
       $('#go', view).onclick = () => { run = { target: 1, log: [] }; nextQ(); examPage(); };
@@ -700,7 +698,7 @@
     }
     const e = S.exam, lv = e.level;
     const rec = COURSES.flatMap(c => c.modules.filter(m => LVX[m.level] === lv || LVX[m.level] === lv + 1).map(m => ({ c, m }))), wk = weakTopics();
-    view.innerHTML = `<h1>Your qualifying exam result</h1>
+    view.innerHTML = `<h1>Your Knowledge Checkpoint result</h1>
       <div class="card stage"><div class="resbig"><div><span class="kicker">Your level</span><div class="lvname lv${lv}">${LVN[lv]}</div><p>${LVD[lv]}</p></div><div class="bigc">${e.correct}<small> / ${e.total} correct</small></div></div>
         <label class="adj">Not right? Set my level: <select id="adj">${LVN.map((n, i) => `<option value="${i}" ${i === S.level ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
         <h3>By difficulty</h3>${e.byLevel.map((v, i) => `<div class="rb"><span>${LVN[i]}</span>${bar(v[1] ? Math.round(100 * v[0] / v[1]) : 0)}<em>${v[0]}/${v[1]}</em></div>`).join('')}
